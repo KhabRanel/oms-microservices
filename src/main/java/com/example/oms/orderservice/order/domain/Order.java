@@ -1,17 +1,38 @@
 package com.example.oms.orderservice.order.domain;
 
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Entity
+@Table(name = "orders")
 public class Order {
 
+    @Id
+    @Column(nullable = false, updatable = false)
     private UUID id;
+
+    @Column(nullable = false)
     private UUID userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OrderStatus status;
+
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount;
+
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<OrderItem> items;
+
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     public Order() {
@@ -29,6 +50,8 @@ public class Order {
         this.totalAmount = totalAmount;
         this.items = items;
         this.createdAt = Instant.now();
+
+        items.forEach(item -> item.attachToOrder(this));
     }
 
     public UUID getId() {
