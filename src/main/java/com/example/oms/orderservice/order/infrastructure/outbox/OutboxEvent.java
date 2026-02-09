@@ -1,14 +1,17 @@
 package com.example.oms.orderservice.order.infrastructure.outbox;
 
+import com.vladmihalcea.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Type;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "outbox_event")
+@Table(name = "outbox_events")
 public class OutboxEvent {
 
     @Id
@@ -18,6 +21,8 @@ public class OutboxEvent {
     private UUID aggregateId;
     private String eventType;
 
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb", nullable = false)
     private String payload;
 
     private Instant createdAt;

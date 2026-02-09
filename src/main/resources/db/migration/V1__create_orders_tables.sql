@@ -7,7 +7,7 @@ CREATE TABLE orders (
 );
 
 CREATE TABLE order_items (
-    id BIG SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     order_id UUID NOT NULL,
     product_id UUID NOT NULL,
     quantity INTEGER NOT NULL,

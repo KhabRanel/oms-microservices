@@ -32,7 +32,7 @@ public class OrderCommandService {
     }
 
     @Transactional
-    public UUID creteOrder(UUID commandId, UUID userId, List<OrderItem> items) {
+    public UUID createOrder(UUID commandId, UUID userId, List<OrderItem> items) {
 
         return processedCommandRepository.findById(commandId)
                 .map(ProcessedCommand::getOrderId)
