@@ -11,7 +11,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
 
   flyway:
     enabled: true
@@ -19,6 +19,14 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: inventory-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.OrderCreatedEvent
 
 server:
   port: 8081

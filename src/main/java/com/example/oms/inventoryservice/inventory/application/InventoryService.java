@@ -11,6 +11,7 @@ import com.example.oms.inventoryservice.inventory.support.ProcessedEventEntity;
 import com.example.oms.inventoryservice.inventory.support.ProcessedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -36,6 +37,7 @@ public class InventoryService {
         this.objectMapper = objectMapper;
     }
 
+    @Transactional
     public void handleOrderCreated(UUID orderId, OrderCreatedEvent event) {
 
         if (processedRepository.existsById(orderId)) {
