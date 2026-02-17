@@ -1,5 +1,6 @@
 package com.example.oms.inventoryservice.inventory.application;
 
+import com.example.oms.inventoryservice.inventory.domain.InventoryReservationStatus;
 import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.OrderCreatedEvent;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventRepository;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -75,6 +77,28 @@ public class InventoryService {
         }
 
         processedRepository.save(new ProcessedEventEntity(orderId));
+    }
+
+    @Transactional
+    public void handlePaymentFailed(UUID orderId) {
+
+        List<InventoryReservationEntity> reservations = reservationRepository.findByOrderId(orderId);
+
+        for (InventoryReservationEntity reservation : reservations) {
+            if (reservation.getStatus() == InventoryReservationStatus.RELEASED) {
+                continue;
+            }
+
+            InventoryItemEntity item =
+                    itemRepository.findById(reservation.getProductId())
+                            .orElseThrow();
+
+            item.release(reservation.getQuantity());
+
+            reservation.release();
+        }
+
+        saveOutboxEvent(orderId, "InventoryReleased", orderId);
     }
 
     private void saveOutboxEvent(UUID orderId, String type, Object payload) {
