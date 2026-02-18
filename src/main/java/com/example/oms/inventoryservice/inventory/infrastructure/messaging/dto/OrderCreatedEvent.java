@@ -8,10 +8,20 @@ public class OrderCreatedEvent {
     private UUID orderId;
     private List<OrderItem> items;
 
+    public OrderCreatedEvent(UUID orderId, List<OrderItem> items) {
+        this.orderId = orderId;
+        this.items = items;
+    }
+
     public static class OrderItem {
 
         private UUID productId;
         private int quantity;
+
+        public OrderItem(UUID productId, int quantity) {
+            this.productId = productId;
+            this.quantity = quantity;
+        }
 
         public UUID getProductId() {
             return productId;
