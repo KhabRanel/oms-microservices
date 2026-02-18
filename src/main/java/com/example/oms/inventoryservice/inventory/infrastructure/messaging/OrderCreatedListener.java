@@ -22,6 +22,6 @@ public class OrderCreatedListener {
         OrderCreatedEvent event =
                 objectMapper.readValue(message, OrderCreatedEvent.class);
 
-        inventoryService.handleOrderCreated(event.getOrderId(), event);
+        inventoryService.handleOrderCreated(event);
     }
 }

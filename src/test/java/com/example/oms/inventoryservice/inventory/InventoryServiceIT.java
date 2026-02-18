@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -54,12 +53,12 @@ class InventoryServiceIT {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-//    @BeforeEach
-//    void cleanDatabase() {
-//        outboxRepository.deleteAll();
-//        reservationRepository.deleteAll();
-//        itemRepository.deleteAll();
-//    }
+    @BeforeEach
+    void cleanDatabase() {
+        reservationRepository.deleteAll();
+        outboxRepository.deleteAll();
+        itemRepository.deleteAll();
+    }
 
     @Test
     void shouldReservedInventory() {
@@ -76,7 +75,7 @@ class InventoryServiceIT {
                 List.of(new OrderCreatedEvent.OrderItem(productId, 3))
         );
 
-        inventoryService.handleOrderCreated(orderId, event);
+        inventoryService.handleOrderCreated(event);
 
         InventoryItemEntity updated = itemRepository.findById(productId)
                 .orElseThrow();
@@ -101,7 +100,7 @@ class InventoryServiceIT {
                 List.of(new OrderCreatedEvent.OrderItem(productId, 3))
         );
 
-        inventoryService.handleOrderCreated(orderId, event);
+        inventoryService.handleOrderCreated(event);
         inventoryService.handlePaymentFailed(orderId);
 
         InventoryItemEntity updated = itemRepository.findById(productId)

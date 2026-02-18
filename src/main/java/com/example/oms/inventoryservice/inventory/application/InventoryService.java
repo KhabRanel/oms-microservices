@@ -40,7 +40,9 @@ public class InventoryService {
     }
 
     @Transactional
-    public void handleOrderCreated(UUID orderId, OrderCreatedEvent event) {
+    public void handleOrderCreated(OrderCreatedEvent event) {
+
+        UUID orderId = event.getOrderId();
 
         if (processedRepository.existsById(orderId)) {
             return;
