@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.oms.inventoryservice.inventory.application.InventoryService;
 import com.example.oms.inventoryservice.inventory.domain.InventoryReservationStatus;
 import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.OrderCreatedEvent;
+import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemRepository;
@@ -133,7 +134,7 @@ class InventoryServiceIT {
     }
 
     @Test
-    void shouldProcessOrderCreatedEventThroughKafka() throws Exception {
+    void shouldProcessOrderCreatedEventThroughKafka() {
 
         UUID productId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -163,6 +164,133 @@ class InventoryServiceIT {
                             itemRepository.findById(productId).orElseThrow();
 
                     assertThat(updated.getReservedQuantity()).isEqualTo(3);
+                });
+    }
+
+    @Test
+    void shouldReleaseInventoryThroughKafka() {
+
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        itemRepository.save(
+                new InventoryItemEntity(productId, 10)
+        );
+
+        String orderEvent = """
+        {
+          "orderId": "%s",
+          "items": [
+            {
+              "productId": "%s",
+              "quantity": 3
+            }
+          ]
+        }
+        """.formatted(orderId, productId);
+
+        kafkaTemplate.send("order-events", orderEvent);
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    InventoryItemEntity updated =
+                            itemRepository.findById(productId).orElseThrow();
+
+                    assertThat(updated.getReservedQuantity()).isEqualTo(3);
+                });
+
+        String paymentFailed = """
+        {
+          "orderId": "%s"
+        }
+        """.formatted(orderId);
+
+        kafkaTemplate.send("payment-events", paymentFailed);
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    InventoryItemEntity updated =
+                            itemRepository.findById(productId).orElseThrow();
+
+                    assertThat(updated.getReservedQuantity()).isEqualTo(0);
+                });
+    }
+
+    @Test
+    void shouldPublishInventoryFailedWhenInsufficientStock() {
+
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        itemRepository.save(
+                new InventoryItemEntity(productId, 2)
+        );
+
+        String orderEvent = """
+        {
+          "orderId": "%s",
+          "items": [
+            {
+              "productId": "%s",
+              "quantity": 5
+            }
+          ]
+        }
+        """.formatted(orderId, productId);
+
+        kafkaTemplate.send("order-events", orderEvent);
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    InventoryItemEntity updated =
+                            itemRepository.findById(productId).orElseThrow();
+
+                    assertThat(updated.getReservedQuantity()).isEqualTo(0);
+                    assertThat(reservationRepository.findAll()).isEmpty();
+
+                    List<OutboxEventEntity> events = outboxRepository.findAll();
+                    assertThat(events).hasSize(1);
+                    assertThat(events.get(0).getType()).isEqualTo("InventoryFailed");
+                });
+    }
+
+    @Test
+    void shouldProcessOrderCreatedOnlyOnceWhenDuplicateEventSent() {
+
+        UUID productId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        itemRepository.save(
+                new InventoryItemEntity(productId, 10)
+        );
+
+        String orderEvent = """
+        {
+          "orderId": "%s",
+          "items": [
+            {
+              "productId": "%s",
+              "quantity": 3
+            }
+          ]
+        }
+        """.formatted(orderId, productId);
+
+        kafkaTemplate.send("order-events", orderEvent);
+        kafkaTemplate.send("order-events", orderEvent);
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    InventoryItemEntity updated =
+                            itemRepository.findById(productId).orElseThrow();
+
+                    assertThat(updated.getReservedQuantity()).isEqualTo(3);
+                    assertThat(reservationRepository.findAll()).hasSize(1);
+                    assertThat(outboxRepository.findAll()).hasSize(1);
                 });
     }
 }
