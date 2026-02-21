@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/inventory_db
-    username: postgres
-    password: postgres
+    username: inventory_user
+    password: inventory_pass
     driver-class-name: org.postgresql.Driver
 
   jpa:
