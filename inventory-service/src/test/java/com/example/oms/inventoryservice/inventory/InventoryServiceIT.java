@@ -11,6 +11,7 @@ import com.example.oms.inventoryservice.inventory.infrastructure.persistence.Inv
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemRepository;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryReservationEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryReservationRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,6 +50,9 @@ class InventoryServiceIT {
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Container
     static PostgreSQLContainer<?> postgres =
@@ -91,8 +97,12 @@ class InventoryServiceIT {
         );
 
         OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
                 orderId,
-                List.of(new OrderCreatedEvent.OrderItem(productId, 3))
+                null,
+                BigDecimal.valueOf(150),
+                List.of(new OrderCreatedEvent.OrderItem(productId, 3, BigDecimal.valueOf(50))),
+                Instant.now()
         );
 
         inventoryService.handleOrderCreated(event);
@@ -116,8 +126,12 @@ class InventoryServiceIT {
         );
 
         OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
                 orderId,
-                List.of(new OrderCreatedEvent.OrderItem(productId, 3))
+                null,
+                BigDecimal.valueOf(150),
+                List.of(new OrderCreatedEvent.OrderItem(productId, 3, BigDecimal.valueOf(50))),
+                Instant.now()
         );
 
         inventoryService.handleOrderCreated(event);
@@ -134,7 +148,7 @@ class InventoryServiceIT {
     }
 
     @Test
-    void shouldProcessOrderCreatedEventThroughKafka() {
+    void shouldProcessOrderCreatedEventThroughKafka() throws Exception {
 
         UUID productId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -143,19 +157,24 @@ class InventoryServiceIT {
                 new InventoryItemEntity(productId, 10)
         );
 
-        String eventJson = """
-        {
-          "orderId": "%s",
-          "items": [
-            {
-              "productId": "%s",
-              "quantity": 3
-            }
-          ]
-        }
-        """.formatted(orderId, productId);
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
+                orderId,
+                UUID.randomUUID(),
+                BigDecimal.valueOf(150),
+                List.of(
+                        new OrderCreatedEvent.OrderItem(
+                                productId,
+                                3,
+                                BigDecimal.valueOf(50)
+                        )
+                ),
+                Instant.now()
+        );
 
-        kafkaTemplate.send("order-events", eventJson);
+        String orderEvent = objectMapper.writeValueAsString(event);
+
+        kafkaTemplate.send("order-events", orderEvent);
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(10))
@@ -168,7 +187,7 @@ class InventoryServiceIT {
     }
 
     @Test
-    void shouldReleaseInventoryThroughKafka() {
+    void shouldReleaseInventoryThroughKafka() throws Exception {
 
         UUID productId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -177,17 +196,22 @@ class InventoryServiceIT {
                 new InventoryItemEntity(productId, 10)
         );
 
-        String orderEvent = """
-        {
-          "orderId": "%s",
-          "items": [
-            {
-              "productId": "%s",
-              "quantity": 3
-            }
-          ]
-        }
-        """.formatted(orderId, productId);
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
+                orderId,
+                UUID.randomUUID(),
+                BigDecimal.valueOf(150),
+                List.of(
+                        new OrderCreatedEvent.OrderItem(
+                                productId,
+                                3,
+                                BigDecimal.valueOf(50)
+                        )
+                ),
+                Instant.now()
+        );
+
+        String orderEvent = objectMapper.writeValueAsString(event);
 
         kafkaTemplate.send("order-events", orderEvent);
 
@@ -219,7 +243,7 @@ class InventoryServiceIT {
     }
 
     @Test
-    void shouldPublishInventoryFailedWhenInsufficientStock() {
+    void shouldPublishInventoryFailedWhenInsufficientStock() throws Exception {
 
         UUID productId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -228,17 +252,22 @@ class InventoryServiceIT {
                 new InventoryItemEntity(productId, 2)
         );
 
-        String orderEvent = """
-        {
-          "orderId": "%s",
-          "items": [
-            {
-              "productId": "%s",
-              "quantity": 5
-            }
-          ]
-        }
-        """.formatted(orderId, productId);
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
+                orderId,
+                UUID.randomUUID(),
+                BigDecimal.valueOf(150),
+                List.of(
+                        new OrderCreatedEvent.OrderItem(
+                                productId,
+                                5,
+                                BigDecimal.valueOf(50)
+                        )
+                ),
+                Instant.now()
+        );
+
+        String orderEvent = objectMapper.writeValueAsString(event);
 
         kafkaTemplate.send("order-events", orderEvent);
 
@@ -258,7 +287,7 @@ class InventoryServiceIT {
     }
 
     @Test
-    void shouldProcessOrderCreatedOnlyOnceWhenDuplicateEventSent() {
+    void shouldProcessOrderCreatedOnlyOnceWhenDuplicateEventSent() throws Exception {
 
         UUID productId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -267,17 +296,22 @@ class InventoryServiceIT {
                 new InventoryItemEntity(productId, 10)
         );
 
-        String orderEvent = """
-        {
-          "orderId": "%s",
-          "items": [
-            {
-              "productId": "%s",
-              "quantity": 3
-            }
-          ]
-        }
-        """.formatted(orderId, productId);
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
+                orderId,
+                UUID.randomUUID(),
+                BigDecimal.valueOf(150),
+                List.of(
+                        new OrderCreatedEvent.OrderItem(
+                                productId,
+                                3,
+                                BigDecimal.valueOf(50)
+                        )
+                ),
+                Instant.now()
+        );
+
+        String orderEvent = objectMapper.writeValueAsString(event);
 
         kafkaTemplate.send("order-events", orderEvent);
         kafkaTemplate.send("order-events", orderEvent);

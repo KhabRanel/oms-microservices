@@ -44,7 +44,7 @@ public class InventoryService {
 
         UUID orderId = event.getOrderId();
 
-        if (processedRepository.existsById(orderId)) {
+        if (processedRepository.existsById(event.getEventId())) {
             return;
         }
 
@@ -78,7 +78,7 @@ public class InventoryService {
             saveOutboxEvent(orderId, "InventoryFailed", event);
         }
 
-        processedRepository.save(new ProcessedEventEntity(orderId));
+        processedRepository.save(new ProcessedEventEntity(event.getEventId()));
     }
 
     @Transactional
