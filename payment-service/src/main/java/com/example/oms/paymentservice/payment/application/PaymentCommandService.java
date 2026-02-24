@@ -50,7 +50,7 @@ public class PaymentCommandService {
 
         paymentRepository.save(transaction);
 
-
+        saveOutboxEvent(event.getOrderId(), "PaymentCompleted", event);
 
         processedEventRepository.save(new ProcessedEventEntity(event.getEventId()));
     }
