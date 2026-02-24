@@ -9,6 +9,7 @@ import com.example.oms.paymentservice.payment.infrastructure.persistence.Process
 import com.example.oms.paymentservice.payment.infrastructure.persistence.ProcessedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -32,6 +33,7 @@ public class PaymentCommandService {
         this.objectMapper = objectMapper;
     }
 
+    @Transactional
     public void handleInventoryReserved(OrderCreatedEvent event) {
 
         if (processedEventRepository.existsById(event.getEventId())) {
