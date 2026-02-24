@@ -26,6 +26,9 @@ public class PaymentTransaction {
     @Column(nullable = false)
     private Instant createdAt;
 
+    public PaymentTransaction() {
+    }
+
     public PaymentTransaction(UUID id, UUID orderId, BigDecimal amount) {
         this.id = id;
         this.orderId = orderId;
