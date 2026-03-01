@@ -61,6 +61,8 @@ public class OutboxEventEntity {
         return payload;
     }
 
+    public Instant getCreatedAt() { return createdAt; }
+
     public boolean isPublished() {
         return published;
     }
