@@ -2,6 +2,7 @@ package com.example.oms.inventoryservice.inventory.application;
 
 import com.example.oms.inventoryservice.inventory.domain.InventoryReservationStatus;
 import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.OrderCreatedEvent;
+import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.PaymentFailedEvent;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemEntity;
@@ -82,7 +83,8 @@ public class InventoryService {
     }
 
     @Transactional
-    public void handlePaymentFailed(UUID orderId) {
+    public void handlePaymentFailed(PaymentFailedEvent event) {
+        UUID orderId = event.getOrderId();
 
         List<InventoryReservationEntity> reservations = reservationRepository.findByOrderId(orderId);
 

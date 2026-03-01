@@ -38,6 +38,6 @@ public class PaymentFailedListener {
                         PaymentFailedEvent.class
                 );
 
-        inventoryService.handlePaymentFailed(event.getOrderId());
+        inventoryService.handlePaymentFailed(event);
     }
 }
