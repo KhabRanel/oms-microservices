@@ -53,6 +53,8 @@ public class OutboxEvent {
         return eventType;
     }
 
+    public Instant getCreatedAt() { return createdAt; }
+
     public String getPayload() {
         return payload;
     }
