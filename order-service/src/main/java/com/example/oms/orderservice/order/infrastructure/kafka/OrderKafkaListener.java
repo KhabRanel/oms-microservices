@@ -30,18 +30,30 @@ public class OrderKafkaListener {
                             }
                     );
 
-            if (!"PaymentCompleted".equals(envelope.getType())) {
-                return;
+            switch (envelope.getType()) {
+
+                case "PaymentCompleted" -> {
+                    PaymentCompletedEvent event =
+                            objectMapper.treeToValue(
+                                    envelope.getPayload(),
+                                    PaymentCompletedEvent.class
+                            );
+
+                    orderCommandService.handlePaymentCompleted(event);
+                }
+
+                case "PaymentFailed" -> {
+                    PaymentFailedEvent event =
+                            objectMapper.treeToValue(
+                                    envelope.getPayload(),
+                                    PaymentFailedEvent.class
+                            );
+                    orderCommandService.handlePaymentFailed(event);
+                }
+
+                default -> {
+                }
             }
-
-            PaymentCompletedEvent event =
-                    objectMapper.treeToValue(
-                            envelope.getPayload(),
-                            PaymentCompletedEvent.class
-                    );
-
-            orderCommandService.handlePaymentCompleted(event);
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

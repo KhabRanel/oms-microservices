@@ -8,6 +8,7 @@ import com.example.oms.orderservice.order.domain.Order;
 import com.example.oms.orderservice.order.domain.OrderItem;
 import com.example.oms.orderservice.order.domain.OrderStatus;
 import com.example.oms.orderservice.order.infrastructure.kafka.PaymentCompletedEvent;
+import com.example.oms.orderservice.order.infrastructure.kafka.PaymentFailedEvent;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEvent;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.orderservice.order.infrastructure.repository.OrderRepository;
@@ -80,5 +81,14 @@ public class OrderCommandService {
                 .orElseThrow();
 
         order.setStatus(OrderStatus.PAID);
+    }
+
+    @Transactional
+    public void handlePaymentFailed(PaymentFailedEvent event) {
+
+        Order order = orderRepository.findById(event.orderId())
+                .orElseThrow();
+
+        order.setStatus(OrderStatus.CANCELED);
     }
 }
