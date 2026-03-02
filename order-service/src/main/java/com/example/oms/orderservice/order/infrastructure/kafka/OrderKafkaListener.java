@@ -5,12 +5,15 @@ import com.example.oms.orderservice.order.common.events.EventEnvelope;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderKafkaListener {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderKafkaListener.class);
     private final ObjectMapper objectMapper;
     private final OrderCommandService orderCommandService;
 
@@ -29,6 +32,8 @@ public class OrderKafkaListener {
                             new TypeReference<EventEnvelope<JsonNode>>() {
                             }
                     );
+
+            log.info("Received payment event: type={}", envelope.getType());
 
             switch (envelope.getType()) {
 

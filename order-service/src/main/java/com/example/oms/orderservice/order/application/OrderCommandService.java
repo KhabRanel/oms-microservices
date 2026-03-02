@@ -12,6 +12,8 @@ import com.example.oms.orderservice.order.infrastructure.kafka.PaymentFailedEven
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEvent;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.orderservice.order.infrastructure.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.util.UUID;
 @Service
 public class OrderCommandService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderCommandService.class);
     private final OrderRepository orderRepository;
     private final ProcessedCommandRepository processedCommandRepository;
     private final OutboxEventRepository outboxEventRepository;
@@ -36,6 +39,7 @@ public class OrderCommandService {
 
     @Transactional
     public UUID createOrder(UUID commandId, UUID userId, List<OrderItem> items) {
+        log.info("Creating order for userId={}, commandId={}", userId, commandId);
 
         return processedCommandRepository.findById(commandId)
                 .map(ProcessedCommand::getOrderId)
@@ -65,6 +69,8 @@ public class OrderCommandService {
 
         processedCommandRepository.save(new ProcessedCommand(commandId, orderId));
 
+        log.info("Order created: orderId={}", orderId);
+
         return orderId;
     }
 
@@ -81,6 +87,8 @@ public class OrderCommandService {
                 .orElseThrow();
 
         order.setStatus(OrderStatus.PAID);
+
+        log.info("Order {} marked as PAID", order.getId());
     }
 
     @Transactional
@@ -90,5 +98,7 @@ public class OrderCommandService {
                 .orElseThrow();
 
         order.setStatus(OrderStatus.CANCELED);
+
+        log.info("Order {} canceled due to payment failure", order.getId());
     }
 }
