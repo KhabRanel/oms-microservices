@@ -13,12 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Random;
 import java.util.UUID;
 
 @Service
 public class PaymentCommandService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentCommandService.class);
+    private final Random random = new Random();
     private final PaymentRepository paymentRepository;
     private final ProcessedEventRepository processedEventRepository;
     private final OutboxEventRepository outboxEventRepository;
@@ -51,13 +53,26 @@ public class PaymentCommandService {
                 event.getTotalAmount()
         );
 
-        transaction.complete();
+        boolean paymentSuccess = random.nextInt(100) < 80;
+
+        if (paymentSuccess) {
+
+            transaction.complete();
+
+            log.info("event=PaymentCompleted orderId={}", event.getOrderId());
+
+            saveOutboxEvent(event.getOrderId(), "PaymentCompleted", event);
+
+        } else {
+
+            transaction.fail();
+
+            log.warn("event=PaymentFailed orderId={}", event.getOrderId());
+
+            saveOutboxEvent(event.getOrderId(), "PaymentFailed", event);
+        }
 
         paymentRepository.save(transaction);
-
-        log.info("event=PaymentCompleted orderId={}", event.getOrderId());
-
-        saveOutboxEvent(event.getOrderId(), "PaymentCompleted", event);
 
         processedEventRepository.save(new ProcessedEventEntity(event.getEventId()));
     }
