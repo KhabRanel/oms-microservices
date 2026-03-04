@@ -87,6 +87,10 @@ public class OrderCommandService {
         Order order = orderRepository.findById(event.orderId())
                 .orElseThrow();
 
+        if (order.getStatus() == OrderStatus.PAID) {
+            return;
+        }
+
         order.setStatus(OrderStatus.PAID);
 
         log.info("event=PaymentCompleted orderId={} status=PAID", order.getId());
@@ -97,6 +101,10 @@ public class OrderCommandService {
 
         Order order = orderRepository.findById(event.orderId())
                 .orElseThrow();
+
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            return;
+        }
 
         order.setStatus(OrderStatus.CANCELED);
 
