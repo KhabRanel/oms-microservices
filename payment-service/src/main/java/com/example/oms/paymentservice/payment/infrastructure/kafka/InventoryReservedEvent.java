@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public class OrderCreatedEvent {
+public class InventoryReservedEvent {
 
     private UUID eventId;
     private UUID orderId;
@@ -14,10 +14,10 @@ public class OrderCreatedEvent {
     private List<OrderItem> items;
     private Instant occurredAt;
 
-    public OrderCreatedEvent() {
+    public InventoryReservedEvent() {
     }
 
-    public OrderCreatedEvent(
+    public InventoryReservedEvent(
             UUID eventId,
             UUID orderId,
             UUID userId,

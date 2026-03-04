@@ -1,13 +1,15 @@
 package com.example.oms.paymentservice.payment.application;
 
 import com.example.oms.paymentservice.payment.domain.PaymentTransaction;
-import com.example.oms.paymentservice.payment.infrastructure.kafka.OrderCreatedEvent;
+import com.example.oms.paymentservice.payment.infrastructure.kafka.InventoryReservedEvent;
 import com.example.oms.paymentservice.payment.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.paymentservice.payment.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.paymentservice.payment.infrastructure.persistence.PaymentRepository;
 import com.example.oms.paymentservice.payment.infrastructure.persistence.ProcessedEventEntity;
 import com.example.oms.paymentservice.payment.infrastructure.persistence.ProcessedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 @Service
 public class PaymentCommandService {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentCommandService.class);
     private final PaymentRepository paymentRepository;
     private final ProcessedEventRepository processedEventRepository;
     private final OutboxEventRepository outboxEventRepository;
@@ -34,11 +37,13 @@ public class PaymentCommandService {
     }
 
     @Transactional
-    public void handleInventoryReserved(OrderCreatedEvent event) {
+    public void handleInventoryReserved(InventoryReservedEvent event) {
 
         if (processedEventRepository.existsById(event.getEventId())) {
             return;
         }
+
+        log.info("event=PaymentProcessingStarted orderId={}", event.getOrderId());
 
         PaymentTransaction transaction = new PaymentTransaction(
                 UUID.randomUUID(),
@@ -49,6 +54,8 @@ public class PaymentCommandService {
         transaction.complete();
 
         paymentRepository.save(transaction);
+
+        log.info("event=PaymentCompleted orderId={}", event.getOrderId());
 
         saveOutboxEvent(event.getOrderId(), "PaymentCompleted", event);
 
