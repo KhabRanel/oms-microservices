@@ -33,7 +33,10 @@ public class OrderKafkaListener {
                             }
                     );
 
-            log.info("Received payment event: type={}", envelope.getType());
+            log.info("event=PaymentEventReceived type={} eventId={} orderId={}",
+                    envelope.getType(),
+                    envelope.getEventId(),
+                    envelope.getPayload().get("orderId"));
 
             switch (envelope.getType()) {
 
@@ -44,6 +47,8 @@ public class OrderKafkaListener {
                                     PaymentCompletedEvent.class
                             );
 
+                    log.info("event=PaymentCompletedProcessing orderId={}", event.orderId());
+
                     orderCommandService.handlePaymentCompleted(event);
                 }
 
@@ -53,13 +58,20 @@ public class OrderKafkaListener {
                                     envelope.getPayload(),
                                     PaymentFailedEvent.class
                             );
+
+                    log.info("event=PaymentFailedProcessing orderId={}", event.orderId());
+
                     orderCommandService.handlePaymentFailed(event);
                 }
 
                 default -> {
+                    log.debug("eventIgnored type={} eventId={}",
+                            envelope.getType(),
+                            envelope.getEventId());
                 }
             }
         } catch (Exception e) {
+            log.error("eventProcessingFailed message={}", message, e);
             throw new RuntimeException(e);
         }
     }

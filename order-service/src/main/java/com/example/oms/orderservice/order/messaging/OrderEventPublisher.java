@@ -51,7 +51,7 @@ public class OrderEventPublisher {
 
                 String json = objectMapper.writeValueAsString(envelope);
 
-                log.info("Publishing event: type={}, aggregateId={}, eventId={}",
+                log.info("event=OutboxPublish type={}, orderId={}, eventId={}",
                         event.getEventType(),
                         event.getAggregateId(),
                         event.getId());
@@ -62,7 +62,7 @@ public class OrderEventPublisher {
 
             } catch (Exception e) {
 
-                log.error("Failed to publish event: eventId={}, aggregateId={}",
+                log.error("event=OutboxPublishFailed eventId={}, orderId={}",
                         event.getId(),
                         event.getAggregateId(),
                         e);

@@ -69,7 +69,8 @@ public class OrderCommandService {
 
         processedCommandRepository.save(new ProcessedCommand(commandId, orderId));
 
-        log.info("Order created: orderId={}", orderId);
+        log.info("event=OrderCreated orderId={} userId={} totalAmount={}",
+                orderId, userId, totalAmount);
 
         return orderId;
     }
@@ -88,7 +89,7 @@ public class OrderCommandService {
 
         order.setStatus(OrderStatus.PAID);
 
-        log.info("Order {} marked as PAID", order.getId());
+        log.info("event=PaymentCompleted orderId={} status=PAID", order.getId());
     }
 
     @Transactional
@@ -99,6 +100,6 @@ public class OrderCommandService {
 
         order.setStatus(OrderStatus.CANCELED);
 
-        log.info("Order {} canceled due to payment failure", order.getId());
+        log.info("event=PaymentCanceled orderId={} status=CANCELED", order.getId());
     }
 }
