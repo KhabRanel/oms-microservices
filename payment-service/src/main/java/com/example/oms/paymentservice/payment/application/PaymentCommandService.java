@@ -47,10 +47,12 @@ public class PaymentCommandService {
 
         log.info("event=PaymentProcessingStarted orderId={}", event.getOrderId());
 
-        PaymentTransaction transaction = new PaymentTransaction(
-                UUID.randomUUID(),
-                event.getOrderId(),
-                event.getTotalAmount()
+        PaymentTransaction transaction = paymentRepository.save(
+                new PaymentTransaction(
+                        UUID.randomUUID(),
+                        event.getOrderId(),
+                        event.getTotalAmount()
+                )
         );
 
         boolean paymentSuccess = random.nextInt(100) < 80;
@@ -71,8 +73,6 @@ public class PaymentCommandService {
 
             saveOutboxEvent(event.getOrderId(), "PaymentFailed", event);
         }
-
-        paymentRepository.save(transaction);
 
         processedEventRepository.save(new ProcessedEventEntity(event.getEventId()));
     }
