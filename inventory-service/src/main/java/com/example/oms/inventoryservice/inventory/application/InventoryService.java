@@ -12,6 +12,8 @@ import com.example.oms.inventoryservice.inventory.infrastructure.persistence.Inv
 import com.example.oms.inventoryservice.inventory.support.ProcessedEventEntity;
 import com.example.oms.inventoryservice.inventory.support.ProcessedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
 @Service
 public class InventoryService {
 
+    private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
     private final InventoryItemRepository itemRepository;
     private final InventoryReservationRepository reservationRepository;
     private final ProcessedEventRepository processedRepository;
@@ -57,6 +60,8 @@ public class InventoryService {
         });
 
         if (canReserve) {
+            log.info("event=InventoryReservationStarted orderId={}", orderId);
+
             event.getItems().forEach(item -> {
                 InventoryItemEntity entity =
                         itemRepository.findById(item.getProductId())
@@ -73,9 +78,13 @@ public class InventoryService {
                 );
             });
 
+            log.info("event=InventoryReserved orderId={}", orderId);
+
             saveOutboxEvent(orderId, "InventoryReserved", event);
 
         } else {
+            log.warn("event=InventoryReservationFailed orderId={}", orderId);
+
             saveOutboxEvent(orderId, "InventoryFailed", event);
         }
 
@@ -87,6 +96,8 @@ public class InventoryService {
         UUID orderId = event.getOrderId();
 
         List<InventoryReservationEntity> reservations = reservationRepository.findByOrderId(orderId);
+
+        log.info("event=InventoryReleaseStarted orderId={}", orderId);
 
         for (InventoryReservationEntity reservation : reservations) {
             if (reservation.getStatus() == InventoryReservationStatus.RELEASED) {
@@ -101,6 +112,8 @@ public class InventoryService {
 
             reservation.release();
         }
+
+        log.info("event=InventoryReleased orderId={}", orderId);
 
         saveOutboxEvent(orderId, "InventoryReleased", orderId);
     }

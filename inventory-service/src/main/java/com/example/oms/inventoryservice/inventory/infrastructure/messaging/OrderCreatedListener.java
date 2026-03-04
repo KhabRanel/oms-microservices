@@ -6,12 +6,15 @@ import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.O
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderCreatedListener {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderCreatedListener.class);
     private final InventoryService inventoryService;
     private final ObjectMapper objectMapper;
 
@@ -30,7 +33,15 @@ public class OrderCreatedListener {
                             new TypeReference<EventEnvelope<JsonNode>>() {}
                     );
 
+            log.info("event=OrderEventReceived type={} eventId={} orderId={}",
+                    envelope.getType(),
+                    envelope.getEventId(),
+                    envelope.getPayload().get("orderId"));
+
             if (!"OrderCreated".equals(envelope.getType())) {
+                log.debug("eventIgnored type={} eventId={}",
+                        envelope.getType(),
+                        envelope.getEventId());
                 return;
             }
 
@@ -43,6 +54,7 @@ public class OrderCreatedListener {
             inventoryService.handleOrderCreated(event);
 
         } catch (Exception e) {
+            log.error("eventProcessingFailed message={}", message, e);
             throw new RuntimeException(e);
         }
     }

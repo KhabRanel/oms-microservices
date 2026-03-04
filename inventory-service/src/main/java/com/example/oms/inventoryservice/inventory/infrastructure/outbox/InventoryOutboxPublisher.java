@@ -3,6 +3,8 @@ package com.example.oms.inventoryservice.inventory.infrastructure.outbox;
 import com.example.oms.inventoryservice.inventory.common.events.EventEnvelope;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,7 @@ import java.util.List;
 @Component
 public class InventoryOutboxPublisher {
 
+    private static final Logger log = LoggerFactory.getLogger(InventoryOutboxPublisher.class);
     private final OutboxEventRepository repository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -29,26 +32,41 @@ public class InventoryOutboxPublisher {
 
     @Scheduled(fixedDelay = 1000)
     @Transactional
-    public void publish() throws Exception {
+    public void publish() {
 
         List<OutboxEventEntity> events =
                 repository.findTop10ByPublishedFalseOrderByCreatedAtAsc();
 
         for (OutboxEventEntity event : events) {
 
-            EventEnvelope<JsonNode> envelope =
-                    new EventEnvelope<>(
-                            event.getId(),
-                            event.getType(),
-                            event.getCreatedAt(),
-                            objectMapper.readTree(event.getPayload())
-                    );
+            try {
+                EventEnvelope<JsonNode> envelope =
+                        new EventEnvelope<>(
+                                event.getId(),
+                                event.getType(),
+                                event.getCreatedAt(),
+                                objectMapper.readTree(event.getPayload())
+                        );
 
-            String json = objectMapper.writeValueAsString(envelope);
+                String json = objectMapper.writeValueAsString(envelope);
 
-            kafkaTemplate.send("inventory-events", json);
+                log.info("event=OutboxPublish type={} orderId={} eventId={}",
+                        event.getType(),
+                        event.getAggregateId(),
+                        event.getId());
 
-            event.markAsPublished();
+                kafkaTemplate.send("inventory-events", json);
+
+                event.markAsPublished();
+
+            } catch (Exception e) {
+
+                log.error("event=OutboxPublishFailed type={} orderId={} eventId={}",
+                        event.getType(),
+                        event.getAggregateId(),
+                        event.getId(),
+                        e);
+            }
         }
     }
 }
