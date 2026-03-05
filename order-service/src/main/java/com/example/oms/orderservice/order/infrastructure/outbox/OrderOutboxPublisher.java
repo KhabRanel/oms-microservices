@@ -1,6 +1,6 @@
-package com.example.oms.paymentservice.payment.infrastructure.outbox;
+package com.example.oms.orderservice.order.infrastructure.outbox;
 
-import com.example.oms.paymentservice.payment.events.EventEnvelope;
+import com.example.oms.orderservice.order.events.EventEnvelope;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -13,19 +13,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Component
-public class PaymentOutboxPublisher {
-
-    private static final Logger log = LoggerFactory.getLogger(PaymentOutboxPublisher.class);
+public class OrderOutboxPublisher {
+    private static final Logger log = LoggerFactory.getLogger(OrderOutboxPublisher.class);
     private final OutboxEventRepository outboxEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    public PaymentOutboxPublisher(
-            OutboxEventRepository outboxEventRepository,
+    public OrderOutboxPublisher(
+            OutboxEventRepository repository,
             KafkaTemplate<String, String> kafkaTemplate,
             ObjectMapper objectMapper
     ) {
-        this.outboxEventRepository = outboxEventRepository;
+        this.outboxEventRepository = repository;
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
     }
@@ -33,37 +32,37 @@ public class PaymentOutboxPublisher {
     @Scheduled(fixedDelay = 1000)
     @Transactional
     public void publish() {
-        List<OutboxEventEntity> events =
-                outboxEventRepository.findTop10ByPublishedFalseOrderByCreatedAtAsc();
+        List<OutboxEvent> events =
+                outboxEventRepository.findTop10ByPublishedFalseOrderByCreatedAt();
 
-        for (OutboxEventEntity event : events) {
+        for (OutboxEvent event : events) {
 
             try {
+
                 EventEnvelope<JsonNode> envelope =
                         new EventEnvelope<>(
                                 event.getId(),
-                                event.getType(),
+                                event.getEventType(),
                                 event.getCreatedAt(),
                                 objectMapper.readTree(event.getPayload())
                         );
 
                 String json = objectMapper.writeValueAsString(envelope);
 
-                log.info("event=OutboxPublish type={} orderId={} eventId={}",
-                        event.getType(),
+                log.info("event=OutboxPublish type={}, orderId={}, eventId={}",
+                        event.getEventType(),
                         event.getAggregateId(),
                         event.getId());
 
-                kafkaTemplate.send("payment-events", json);
+                kafkaTemplate.send("order-events", json);
 
-                event.markAsPublished();
+                event.markPublished();
 
             } catch (Exception e) {
 
-                log.error("event=OutboxPublishFailed type={} orderId={} eventId={}",
-                        event.getType(),
-                        event.getAggregateId(),
+                log.error("event=OutboxPublishFailed eventId={}, orderId={}",
                         event.getId(),
+                        event.getAggregateId(),
                         e);
             }
         }

@@ -1,7 +1,9 @@
 package com.example.oms.orderservice.order.infrastructure.kafka;
 
 import com.example.oms.orderservice.order.application.OrderCommandService;
-import com.example.oms.orderservice.order.common.events.EventEnvelope;
+import com.example.oms.orderservice.order.events.EventEnvelope;
+import com.example.oms.orderservice.order.events.PaymentCompletedEvent;
+import com.example.oms.orderservice.order.events.PaymentFailedEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

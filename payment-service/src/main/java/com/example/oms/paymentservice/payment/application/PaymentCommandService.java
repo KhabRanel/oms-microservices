@@ -1,7 +1,7 @@
 package com.example.oms.paymentservice.payment.application;
 
 import com.example.oms.paymentservice.payment.domain.PaymentTransaction;
-import com.example.oms.paymentservice.payment.infrastructure.kafka.InventoryReservedEvent;
+import com.example.oms.paymentservice.payment.events.InventoryReservedEvent;
 import com.example.oms.paymentservice.payment.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.paymentservice.payment.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.paymentservice.payment.infrastructure.persistence.PaymentRepository;

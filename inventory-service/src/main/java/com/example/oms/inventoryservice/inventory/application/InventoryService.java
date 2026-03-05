@@ -1,16 +1,16 @@
 package com.example.oms.inventoryservice.inventory.application;
 
 import com.example.oms.inventoryservice.inventory.domain.InventoryReservationStatus;
-import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.OrderCreatedEvent;
-import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.PaymentFailedEvent;
+import com.example.oms.inventoryservice.inventory.events.OrderCreatedEvent;
+import com.example.oms.inventoryservice.inventory.events.PaymentFailedEvent;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemRepository;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryReservationEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryReservationRepository;
-import com.example.oms.inventoryservice.inventory.support.ProcessedEventEntity;
-import com.example.oms.inventoryservice.inventory.support.ProcessedEventRepository;
+import com.example.oms.inventoryservice.inventory.infrastructure.persistence.ProcessedEventEntity;
+import com.example.oms.inventoryservice.inventory.infrastructure.persistence.ProcessedEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

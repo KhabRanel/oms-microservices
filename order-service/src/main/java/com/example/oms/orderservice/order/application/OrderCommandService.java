@@ -1,17 +1,17 @@
 package com.example.oms.orderservice.order.application;
 
-import com.example.oms.orderservice.common.idempotency.ProcessedCommand;
-import com.example.oms.orderservice.common.idempotency.ProcessedCommandRepository;
-import com.example.oms.orderservice.common.serialization.EventSerializer;
-import com.example.oms.orderservice.order.application.event.OrderCreatedEvent;
+import com.example.oms.orderservice.order.infrastructure.persistence.ProcessedCommand;
+import com.example.oms.orderservice.order.infrastructure.persistence.ProcessedCommandRepository;
+import com.example.oms.orderservice.order.infrastructure.serialization.EventSerializer;
+import com.example.oms.orderservice.order.events.OrderCreatedEvent;
 import com.example.oms.orderservice.order.domain.Order;
 import com.example.oms.orderservice.order.domain.OrderItem;
 import com.example.oms.orderservice.order.domain.OrderStatus;
-import com.example.oms.orderservice.order.infrastructure.kafka.PaymentCompletedEvent;
-import com.example.oms.orderservice.order.infrastructure.kafka.PaymentFailedEvent;
+import com.example.oms.orderservice.order.events.PaymentCompletedEvent;
+import com.example.oms.orderservice.order.events.PaymentFailedEvent;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEvent;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEventRepository;
-import com.example.oms.orderservice.order.infrastructure.repository.OrderRepository;
+import com.example.oms.orderservice.order.infrastructure.persistence.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

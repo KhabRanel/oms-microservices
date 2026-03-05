@@ -1,8 +1,8 @@
-package com.example.oms.paymentservice.payment.infrastructure.kafka;
+package com.example.oms.inventoryservice.inventory.infrastructure.kafka;
 
-import com.example.oms.paymentservice.payment.application.PaymentCommandService;
-import com.example.oms.paymentservice.payment.events.EventEnvelope;
-import com.example.oms.paymentservice.payment.events.InventoryReservedEvent;
+import com.example.oms.inventoryservice.inventory.application.InventoryService;
+import com.example.oms.inventoryservice.inventory.events.EventEnvelope;
+import com.example.oms.inventoryservice.inventory.events.PaymentFailedEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,24 +12,20 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PaymentKafkaListener {
+public class PaymentFailedListener {
 
-    private static final Logger log = LoggerFactory.getLogger(PaymentKafkaListener.class);
-    private final PaymentCommandService paymentCommandService;
+    private static final Logger log = LoggerFactory.getLogger(PaymentFailedListener.class);
+    private final InventoryService inventoryService;
     private final ObjectMapper objectMapper;
 
-    public PaymentKafkaListener(PaymentCommandService paymentCommandService, ObjectMapper objectMapper) {
-        this.paymentCommandService = paymentCommandService;
+    public PaymentFailedListener(InventoryService inventoryService, ObjectMapper objectMapper) {
+        this.inventoryService = inventoryService;
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(
-            topics = "inventory-events",
-            groupId = "payment-service"
-    )
+    @KafkaListener(topics = "payment-events", groupId = "inventory-service")
     public void listen(String message) {
         try {
-
             EventEnvelope<JsonNode> envelope =
                     objectMapper.readValue(
                             message,
@@ -37,22 +33,22 @@ public class PaymentKafkaListener {
                             }
                     );
 
-            if (!"InventoryReserved".equals(envelope.getType())) {
+            if (!"PaymentFailed".equals(envelope.getType())) {
                 log.debug("eventIgnored type={} eventId={}",
                         envelope.getType(),
                         envelope.getEventId());
                 return;
             }
 
-            InventoryReservedEvent event =
+            PaymentFailedEvent event =
                     objectMapper.treeToValue(
                             envelope.getPayload(),
-                            InventoryReservedEvent.class
+                            PaymentFailedEvent.class
                     );
 
-            log.info("event=InventoryReservedReceived orderId={}", event.getOrderId());
+            log.info("event=PaymentFailedReceived orderId={}", event.getOrderId());
 
-            paymentCommandService.handleInventoryReserved(event);
+            inventoryService.handlePaymentFailed(event);
 
         } catch (Exception e) {
             log.error("eventProcessingFailed message={}", message, e);

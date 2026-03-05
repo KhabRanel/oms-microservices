@@ -2,12 +2,12 @@ package com.example.oms.orderservice.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.example.oms.orderservice.common.idempotency.ProcessedCommandRepository;
+import com.example.oms.orderservice.order.infrastructure.persistence.ProcessedCommandRepository;
 import com.example.oms.orderservice.order.application.OrderCommandService;
 import com.example.oms.orderservice.order.domain.OrderItem;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEvent;
 import com.example.oms.orderservice.order.infrastructure.outbox.OutboxEventRepository;
-import com.example.oms.orderservice.order.infrastructure.repository.OrderRepository;
+import com.example.oms.orderservice.order.infrastructure.persistence.OrderRepository;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;

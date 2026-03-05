@@ -1,6 +1,6 @@
 package com.example.oms.inventoryservice.inventory.infrastructure.outbox;
 
-import com.example.oms.inventoryservice.inventory.common.events.EventEnvelope;
+import com.example.oms.inventoryservice.inventory.events.EventEnvelope;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.oms.inventoryservice.inventory.application.InventoryService;
 import com.example.oms.inventoryservice.inventory.domain.InventoryReservationStatus;
-import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.OrderCreatedEvent;
-import com.example.oms.inventoryservice.inventory.infrastructure.messaging.dto.PaymentFailedEvent;
+import com.example.oms.inventoryservice.inventory.events.OrderCreatedEvent;
+import com.example.oms.inventoryservice.inventory.events.PaymentFailedEvent;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventEntity;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventRepository;
 import com.example.oms.inventoryservice.inventory.infrastructure.persistence.InventoryItemEntity;
