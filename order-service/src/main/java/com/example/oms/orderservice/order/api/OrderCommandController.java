@@ -2,6 +2,7 @@ package com.example.oms.orderservice.order.api;
 
 import com.example.oms.orderservice.order.application.OrderCommandService;
 import com.example.oms.orderservice.order.domain.OrderItem;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,7 @@ public class OrderCommandController {
     }
 
     @PostMapping
-    public ResponseEntity<UUID> createOrder(@RequestBody CreateOrderRequest request) {
+    public ResponseEntity<UUID> createOrder(@Valid @RequestBody CreateOrderRequest request) {
 
         List<OrderItem> items = request.getItems().stream()
                 .map(item -> new OrderItem(
