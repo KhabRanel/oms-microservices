@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: order-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/order_db
     username: order_user
@@ -13,3 +16,7 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+
+  logging:
+    pattern:
+      console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%spring.application.name] %logger{36} - %msg%n"

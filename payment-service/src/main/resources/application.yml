@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: payment-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/payment_db
     username: payment_user
@@ -19,6 +22,10 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  logging:
+    pattern:
+      console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%spring.application.name] %logger{36} - %msg%n"
 
 server:
   port: 8082
