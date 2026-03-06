@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.oms.inventoryservice.inventory.application.InventoryService;
 import com.example.oms.inventoryservice.inventory.domain.InventoryReservationStatus;
+import com.example.oms.inventoryservice.inventory.events.EventEnvelope;
 import com.example.oms.inventoryservice.inventory.events.OrderCreatedEvent;
 import com.example.oms.inventoryservice.inventory.events.PaymentFailedEvent;
 import com.example.oms.inventoryservice.inventory.infrastructure.outbox.OutboxEventEntity;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -35,6 +37,7 @@ import java.util.UUID;
 
 @SpringBootTest
 @Testcontainers
+@ActiveProfiles("test")
 class InventoryServiceIT {
 
     @Autowired
@@ -181,7 +184,7 @@ class InventoryServiceIT {
 
         String orderEvent = objectMapper.writeValueAsString(event);
 
-        kafkaTemplate.send("order-events", orderEvent);
+        kafkaTemplate.send("order-events", wrapEvent("OrderCreated", event));
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(10))
@@ -218,9 +221,7 @@ class InventoryServiceIT {
                 Instant.now()
         );
 
-        String orderEvent = objectMapper.writeValueAsString(event);
-
-        kafkaTemplate.send("order-events", orderEvent);
+        kafkaTemplate.send("order-events", wrapEvent("OrderCreated", event));
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(10))
@@ -231,13 +232,7 @@ class InventoryServiceIT {
                     assertThat(updated.getReservedQuantity()).isEqualTo(3);
                 });
 
-        String paymentFailed = """
-        {
-          "orderId": "%s"
-        }
-        """.formatted(orderId);
-
-        kafkaTemplate.send("payment-events", paymentFailed);
+        kafkaTemplate.send("payment-events", wrapEvent("PaymentFailed", event));
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(10))
@@ -274,9 +269,7 @@ class InventoryServiceIT {
                 Instant.now()
         );
 
-        String orderEvent = objectMapper.writeValueAsString(event);
-
-        kafkaTemplate.send("order-events", orderEvent);
+        kafkaTemplate.send("order-events", wrapEvent("OrderCreated", event));
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(10))
@@ -318,10 +311,8 @@ class InventoryServiceIT {
                 Instant.now()
         );
 
-        String orderEvent = objectMapper.writeValueAsString(event);
-
-        kafkaTemplate.send("order-events", orderEvent);
-        kafkaTemplate.send("order-events", orderEvent);
+        kafkaTemplate.send("order-events", wrapEvent("OrderCreated", event));
+        kafkaTemplate.send("order-events", wrapEvent("OrderCreated", event));
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(10))
@@ -333,5 +324,17 @@ class InventoryServiceIT {
                     assertThat(reservationRepository.findAll()).hasSize(1);
                     assertThat(outboxRepository.findAll()).hasSize(1);
                 });
+    }
+
+    private String wrapEvent(String type, Object payload) throws Exception {
+        EventEnvelope<Object> envelope =
+                new EventEnvelope<>(
+                        UUID.randomUUID(),
+                        type,
+                        Instant.now(),
+                        payload
+                );
+
+        return objectMapper.writeValueAsString(envelope);
     }
 }
